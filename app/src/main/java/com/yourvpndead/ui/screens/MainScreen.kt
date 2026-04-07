@@ -41,7 +41,7 @@ fun MainScreen(viewModel: ScanViewModel) {
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, report)
-                                putExtra(Intent.EXTRA_SUBJECT, "VPN Leak Scanner Report")
+                                putExtra(Intent.EXTRA_SUBJECT, "YourVPNDead — Отчёт сканирования")
                             }
                             context.startActivity(Intent.createChooser(intent, "Поделиться отчётом"))
                         }) {
@@ -160,7 +160,7 @@ fun MainScreen(viewModel: ScanViewModel) {
                 if (result.findings.isNotEmpty()) {
                     item {
                         Text(
-                            "Находки (${result.findings.size})",
+                            "Результаты проверки (${result.findings.size})",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -187,14 +187,15 @@ fun MainScreen(viewModel: ScanViewModel) {
                             Text("🔍", fontSize = 48.sp)
                             Spacer(Modifier.height(12.dp))
                             Text(
-                                "VPN Leak Scanner",
+                                "Самопроверка VPN",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "Проверяет, может ли шпионское ПО обнаружить ваш VPN " +
-                                "через уязвимость SOCKS5 на localhost",
+                                "Проверяет, какую информацию о вашем VPN может получить " +
+                                "любое приложение на устройстве. Роскомнадзор, Минцифры, " +
+                                "шпионское ПО — всё это видит ваш localhost.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -380,7 +381,7 @@ private fun DirectSignsCard(directSigns: DirectSignsResult) {
             // Also show all default routes for reference
             val defaultRoutes = directSigns.routingEntries.filter { it.isDefaultRoute && !it.isVpnRoute }
             if (defaultRoutes.isNotEmpty()) {
-                Text("📋 Default routes:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("📋 Маршруты по умолчанию:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 defaultRoutes.forEach { route ->
                     Text(
                         "  ${route.interfaceName}: ${route.destination} → ${route.gateway}",

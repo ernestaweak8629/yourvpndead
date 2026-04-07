@@ -89,28 +89,28 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         val device = result.device
 
         return buildString {
-            appendLine("═══ YourVPNDead — Scan Report ═══")
-            appendLine("Date: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date(result.timestamp))}")
+            appendLine("═══ YourVPNDead — Отчёт сканирования ═══")
+            appendLine("Дата: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(java.util.Date(result.timestamp))}")
             appendLine()
 
             if (device != null) {
-                appendLine("── Device ──")
-                appendLine("Model: ${device.manufacturer} ${device.model}")
+                appendLine("── Устройство ──")
+                appendLine("Модель: ${device.manufacturer} ${device.model}")
                 appendLine("Android: ${device.androidVersion} (SDK ${device.sdkVersion})")
-                appendLine("VPN Active: ${if (device.isVpnActive) "Yes" else "No"}")
-                appendLine("Direct IP: ${device.directIP ?: "unknown"}")
+                appendLine("VPN активен: ${if (device.isVpnActive) "Да" else "Нет"}")
+                appendLine("Прямой IP: ${device.directIP ?: "не определён"}")
                 appendLine()
 
                 if (device.networkInterfaces.isNotEmpty()) {
-                    appendLine("── Network Interfaces ──")
+                    appendLine("── Сетевые интерфейсы ──")
                     device.networkInterfaces.filter { it.isUp }.forEach { iface ->
-                        appendLine("  ${iface.name}: ${iface.ips.joinToString()} (${if (iface.isUp) "UP" else "DOWN"})")
+                        appendLine("  ${iface.name}: ${iface.ips.joinToString()} (${if (iface.isUp) "активен" else "неактивен"})")
                     }
                     appendLine()
                 }
             }
 
-            appendLine("── Open Ports: ${result.openPorts.size} ──")
+            appendLine("── Открытые порты: ${result.openPorts.size} ──")
             result.openPorts.forEach { appendLine("  :${it.port} (${it.responseMs}ms)") }
             appendLine()
 
@@ -232,58 +232,58 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             if (result.proxies.isNotEmpty()) {
-                appendLine("── Proxies Found ──")
+                appendLine("── Обнаруженные прокси ──")
                 result.proxies.forEach { proxy ->
-                    val status = if (proxy.vulnerable) "VULNERABLE" else "OK"
+                    val status = if (proxy.vulnerable) "УЯЗВИМ" else "защищён"
                     appendLine("  :${proxy.port} ${proxy.type.label} [$status]")
                 }
                 appendLine()
             }
 
             if (result.xrayAPI != null) {
-                appendLine("── xray API ──")
-                appendLine("  Port: ${result.xrayAPI.port}")
+                appendLine("── xray gRPC API ──")
+                appendLine("  Порт: ${result.xrayAPI.port}")
                 appendLine("  ${result.xrayAPI.details}")
                 appendLine()
             }
 
             if (result.exitIPs.isNotEmpty()) {
-                appendLine("── Exit IPs (LEAKED!) ──")
+                appendLine("── Exit IP (УТЕЧКА!) ──")
                 result.exitIPs.forEach { exitIP ->
-                    appendLine("  IP: ${exitIP.ip} (via SOCKS5 :${exitIP.port})")
+                    appendLine("  IP: ${exitIP.ip} (через SOCKS5 :${exitIP.port})")
                     exitIP.geo?.let { geo ->
-                        appendLine("    Country: ${geo.country} (${geo.countryCode})")
-                        appendLine("    City: ${geo.city}")
+                        appendLine("    Страна: ${geo.country} (${geo.countryCode})")
+                        appendLine("    Город: ${geo.city}")
                         appendLine("    ISP: ${geo.isp}")
                         appendLine("    AS: ${geo.asNumber}")
-                        if (geo.isProxy) appendLine("    Proxy/VPN: Yes")
-                        if (geo.isHosting) appendLine("    Hosting: Yes")
+                        if (geo.isProxy) appendLine("    Прокси/VPN: Да")
+                        if (geo.isHosting) appendLine("    Хостинг: Да")
                     }
                 }
                 appendLine()
             }
 
             if (result.authProbes.isNotEmpty()) {
-                appendLine("── Auth Analysis ──")
+                appendLine("── Анализ аутентификации ──")
                 result.authProbes.forEach { auth ->
-                    appendLine("  Port ${auth.port}: method=${auth.methodName}")
-                    appendLine("    Auth required: ${auth.authRequired}")
+                    appendLine("  Порт ${auth.port}: метод=${auth.methodName}")
+                    appendLine("    Auth обязателен: ${auth.authRequired}")
                     if (auth.bruteForceSuccess == true) {
-                        appendLine("    ⚠️ WEAK PASSWORD: ${auth.bruteForceCredentials}")
+                        appendLine("    ⚠️ СЛАБЫЙ ПАРОЛЬ: ${auth.bruteForceCredentials}")
                     }
                     if (auth.udpBypassPossible) {
-                        appendLine("    ⚠️ UDP bypass possible (no per-packet auth)")
+                        appendLine("    ⚠️ UDP bypass возможен (нет per-packet auth)")
                     }
                     auth.sniffAttempt?.let { sniff ->
-                        appendLine("    Raw socket blocked: ${sniff.rawSocketBlocked}")
-                        appendLine("    /proc/net/tcp visible: ${sniff.procNetTcpVisible}")
-                        appendLine("    Conclusion: ${sniff.conclusion}")
+                        appendLine("    Raw socket заблокирован: ${sniff.rawSocketBlocked}")
+                        appendLine("    /proc/net/tcp доступен: ${sniff.procNetTcpVisible}")
+                        appendLine("    Вывод: ${sniff.conclusion}")
                     }
                 }
                 appendLine()
             }
 
-            appendLine("── Findings: ${result.findings.size} ──")
+            appendLine("── Результаты: ${result.findings.size} ──")
             result.findings.forEach { finding ->
                 appendLine("  [${finding.severity.emoji} ${finding.severity.label}] ${finding.title}")
                 if (finding.description.isNotBlank()) {
@@ -292,7 +292,7 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             appendLine()
-            appendLine("═══ Generated by YourVPNDead ═══")
+            appendLine("═══ Отчёт создан YourVPNDead ═══")
         }
     }
 }

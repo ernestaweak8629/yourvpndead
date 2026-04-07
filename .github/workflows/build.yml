@@ -1,4 +1,4 @@
-name: Build & Release APK
+name: Build & Release
 
 on:
   push:
@@ -33,9 +33,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
-
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
@@ -46,11 +43,17 @@ jobs:
           echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "count=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Rename APKs
+      - name: Prepare release APK
         run: |
-          mkdir -p release-apks
-          cp app/build/outputs/apk/debug/app-debug.apk release-apks/YourVPNDead-v${{ steps.version.outputs.count }}-debug.apk
-          cp app/build/outputs/apk/release/app-release-unsigned.apk release-apks/YourVPNDead-v${{ steps.version.outputs.count }}-release.apk
+          mkdir -p release
+          cp app/build/outputs/apk/release/app-release.apk release/YourVPNDead-v${{ steps.version.outputs.count }}.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YourVPNDead
+          path: release/*.apk
+          retention-days: 90
 
       - name: Create GitHub Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -59,7 +62,7 @@ jobs:
           tag: v${{ steps.version.outputs.count }}
           name: "YourVPNDead v${{ steps.version.outputs.count }} (${{ steps.version.outputs.date }})"
           body: |
-            ## Автоматический билд
+            ## Автоматический релиз
 
             **Дата:** ${{ steps.version.outputs.date }}
             **Коммит:** [`${{ steps.version.outputs.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
@@ -68,21 +71,7 @@ jobs:
             ${{ github.event.head_commit.message }}
 
             ---
-            Скачайте `YourVPNDead-v${{ steps.version.outputs.count }}-debug.apk` и установите на Android.
-          artifacts: "release-apks/*.apk"
+            📥 Скачайте **YourVPNDead-v${{ steps.version.outputs.count }}.apk** и установите на Android.
+          artifacts: "release/*.apk"
           makeLatest: true
           allowUpdates: true
-
-      - name: Upload Debug APK (artifact)
-        uses: actions/upload-artifact@v4
-        with:
-          name: yourvpndead-debug
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 30
-
-      - name: Upload Release APK (artifact)
-        uses: actions/upload-artifact@v4
-        with:
-          name: yourvpndead-release
-          path: app/build/outputs/apk/release/*.apk
-          retention-days: 90
