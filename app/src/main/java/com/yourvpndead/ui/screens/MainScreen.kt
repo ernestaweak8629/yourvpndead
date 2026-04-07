@@ -17,14 +17,116 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yourvpndead.BuildConfig
 import com.yourvpndead.model.*
+import com.yourvpndead.updater.AppUpdater
+import com.yourvpndead.updater.UpdateInfo
 import com.yourvpndead.viewmodel.ScanViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: ScanViewModel) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+
+    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableFloatStateOf(-1f) }
+    var downloadError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    // Проверка обновлений при запуске
+    LaunchedEffect(Unit) {
+        try {
+            val update = AppUpdater().checkForUpdate(BuildConfig.VERSION_CODE)
+            if (update != null) {
+                updateInfo = update
+                showUpdateDialog = true
+            }
+        } catch (_: Exception) { }
+    }
+
+    // Диалог обновления
+    if (showUpdateDialog && updateInfo != null) {
+        val info = updateInfo!!
+        AlertDialog(
+            onDismissRequest = { if (downloadProgress < 0) showUpdateDialog = false },
+            title = {
+                Text("Доступно обновление ${info.versionTag}")
+            },
+            text = {
+                Column {
+                    if (info.releaseNotes.isNotBlank()) {
+                        Text(
+                            info.releaseNotes.take(300),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(Modifier.height(12.dp))
+                    }
+                    if (info.fileSize > 0) {
+                        Text(
+                            "Размер: ${info.fileSize / 1024 / 1024} МБ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (downloadProgress >= 0f) {
+                        Spacer(Modifier.height(12.dp))
+                        LinearProgressIndicator(
+                            progress = { downloadProgress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Скачивание: ${(downloadProgress * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    downloadError?.let { error ->
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        downloadError = null
+                        downloadProgress = 0f
+                        scope.launch {
+                            val updater = AppUpdater()
+                            val apk = updater.downloadApk(
+                                context, info.downloadUrl, info.fileName
+                            ) { progress -> downloadProgress = progress }
+
+                            if (apk != null) {
+                                updater.installApk(context, apk)
+                                showUpdateDialog = false
+                            } else {
+                                downloadError = "Ошибка скачивания"
+                                downloadProgress = -1f
+                            }
+                        }
+                    },
+                    enabled = downloadProgress < 0f || downloadProgress >= 1f
+                ) {
+                    Text(if (downloadProgress < 0f) "Обновить" else "Готово")
+                }
+            },
+            dismissButton = {
+                if (downloadProgress < 0f) {
+                    TextButton(onClick = { showUpdateDialog = false }) {
+                        Text("Позже")
+                    }
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {

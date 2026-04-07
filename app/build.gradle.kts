@@ -3,6 +3,13 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val gitVersionCode: Int = try {
+    val process = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+        .directory(project.rootDir)
+        .start()
+    process.inputStream.bufferedReader().readText().trim().toInt()
+} catch (_: Exception) { 2 }
+
 android {
     namespace = "com.yourvpndead"
     compileSdk = 34
@@ -11,8 +18,8 @@ android {
         applicationId = "com.yourvpndead"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = gitVersionCode
+        versionName = "0.${gitVersionCode}.0"
     }
 
     buildTypes {
@@ -33,6 +40,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
