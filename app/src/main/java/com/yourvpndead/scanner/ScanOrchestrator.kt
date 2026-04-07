@@ -539,6 +539,64 @@ class ScanOrchestrator(context: Context) {
             ))
         }
 
+        // === Сводка: все обнаруженные VPN-серверы ===
+        val vpnServerIPs = mutableListOf<Triple<String, String, String>>() // IP, source, type
+
+        // Источник 1: Host routes из /proc/net/route (самый надёжный)
+        directSigns.routingEntries
+            .filter { it.isVpnServerRoute && it.destination != "0.0.0.0" }
+            .forEach { route ->
+                vpnServerIPs.add(Triple(
+                    route.destination,
+                    "/proc/net/route (host route через ${route.interfaceName})",
+                    "Маршрут VPN-сервера"
+                ))
+            }
+
+        // Источник 2: Established connections с высокой вероятностью VPN
+        establishedConnections.filter { it.vpnLikelihood >= 60 }.forEach { conn ->
+            if (vpnServerIPs.none { it.first == conn.remoteIp }) {
+                vpnServerIPs.add(Triple(
+                    "${conn.remoteIp}:${conn.remotePort}",
+                    "/proc/net/${conn.protocol.lowercase()} (${conn.state})",
+                    conn.serverGuess
+                ))
+            }
+        }
+
+        // Источник 3: Exit IP через SOCKS5
+        exitIPsWithGeo.forEach { exitIP ->
+            if (vpnServerIPs.none { it.first.startsWith(exitIP.ip) }) {
+                vpnServerIPs.add(Triple(
+                    exitIP.ip,
+                    "SOCKS5 exit IP (порт ${exitIP.port})",
+                    "VLESS/Trojan/xray (exit IP)"
+                ))
+            }
+        }
+
+        if (vpnServerIPs.isNotEmpty()) {
+            findings.add(Finding(
+                Severity.CRITICAL,
+                "🎯 IP VPN-серверов раскрыты: ${vpnServerIPs.size} адресов",
+                buildString {
+                    append("Все обнаруженные IP-адреса VPN-серверов:\n\n")
+                    vpnServerIPs.forEachIndexed { i, (ip, source, type) ->
+                        append("${i + 1}. $ip\n")
+                        append("   Тип: $type\n")
+                        append("   Источник: $source\n\n")
+                    }
+                    append("⚠️ Эти IP могут быть переданы для блокировки.\n")
+                    append("Работает даже при раздельном туннелировании.")
+                },
+                buildMap {
+                    vpnServerIPs.forEachIndexed { i, (ip, _, type) ->
+                        put("Сервер ${i + 1}", "$ip ($type)")
+                    }
+                }
+            ))
+        }
+
         onPhase(ScanPhase.DONE)
         onProgress(1f)
 

@@ -246,7 +246,9 @@ data class RoutingEntry(
     val mask: String = "",
     val flags: String = "",
     val isDefaultRoute: Boolean = false,
-    val isVpnRoute: Boolean = false
+    val isVpnRoute: Boolean = false,
+    val isHostRoute: Boolean = false,
+    val isVpnServerRoute: Boolean = false
 )
 
 /** Результат проверки split tunnel */

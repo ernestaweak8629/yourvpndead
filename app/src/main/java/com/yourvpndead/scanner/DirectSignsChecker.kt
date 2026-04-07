@@ -295,14 +295,29 @@ class DirectSignsChecker(private val context: Context) {
         val isNormalInterface = NORMAL_ROUTE_PREFIXES.any { iface.startsWith(it) }
         val isVpn = isDefault && !isNormalInterface
 
+        // Host route: маска FFFFFFFF = /32 (маршрут к одному IP)
+        val isHostRoute = maskHex == "FFFFFFFF"
+
+        // VPN server route: host route через РЕАЛЬНЫЙ интерфейс (не tun/ppp/wg)
+        // Когда VPN включён, ОС добавляет /32 маршрут к серверу VPN через WiFi/LTE,
+        // чтобы пакеты VPN-туннеля шли мимо TUN-интерфейса.
+        // Это работает для ВСЕХ VPN: WireGuard, Amnezia, xray, OpenVPN.
+        val isTunInterface = iface.startsWith("tun") || iface.startsWith("ppp") ||
+            iface.startsWith("wg") || iface.startsWith("ipsec")
+        val isVpnServerRoute = isHostRoute && !isTunInterface && !iface.startsWith("lo")
+
+        val destIp = hexToIp(destHex)
+
         return RoutingEntry(
-            destination = hexToIp(destHex),
+            destination = destIp,
             gateway = hexToIp(gatewayHex),
             interfaceName = iface,
             mask = hexToIp(maskHex),
             flags = flags,
             isDefaultRoute = isDefault,
-            isVpnRoute = isVpn
+            isVpnRoute = isVpn,
+            isHostRoute = isHostRoute,
+            isVpnServerRoute = isVpnServerRoute
         )
     }
 
