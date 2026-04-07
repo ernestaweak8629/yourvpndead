@@ -232,6 +232,10 @@ private fun SummaryCard(result: ScanResult) {
                             append("Портов: ${result.openPorts.size}")
                             append(" • Прокси: ${result.proxies.size}")
                             append(" • Уязвимых: ${result.vulnerableCount}")
+                            val criticalFindings = result.findings.count { it.severity == Severity.CRITICAL }
+                            if (criticalFindings > 0) {
+                                append(" • Критических: $criticalFindings")
+                            }
                         },
                         style = MaterialTheme.typography.bodySmall
                     )

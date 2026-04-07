@@ -95,6 +95,50 @@ class ScanOrchestrator(context: Context) {
             ))
         }
 
+        // Фаза 0.6: Обнаружение IP VPN-серверов через /proc/net
+        onProgress(0.05f)
+        val establishedConnections = procNetScanner.scanEstablishedConnections()
+        val vpnServerCandidates = establishedConnections.filter { it.vpnLikelihood >= 50 }
+
+        if (vpnServerCandidates.isNotEmpty()) {
+            findings.add(Finding(
+                Severity.CRITICAL,
+                "🔴 Обнаружены вероятные VPN-серверы (${vpnServerCandidates.size})",
+                buildString {
+                    append("Метод: анализ /proc/net/tcp + /proc/net/udp (ESTABLISHED-соединения)\n")
+                    append("Найдены соединения с публичными IP на характерных VPN-портах:\n\n")
+                    vpnServerCandidates.forEach { conn ->
+                        append("  ${conn.protocol} → ${conn.remoteIp}:${conn.remotePort}")
+                        append(" — ${conn.serverGuess}")
+                        append(" (вероятность: ${conn.vpnLikelihood}%)\n")
+                    }
+                    append("\nЭти IP-адреса могут быть переданы для блокировки.")
+                },
+                buildMap {
+                    vpnServerCandidates.forEachIndexed { i, conn ->
+                        put("Сервер ${i + 1}", "${conn.remoteIp}:${conn.remotePort} (${conn.serverGuess})")
+                    }
+                }
+            ))
+        }
+
+        if (establishedConnections.isNotEmpty() && vpnServerCandidates.isEmpty()) {
+            findings.add(Finding(
+                Severity.INFO,
+                "📊 Активных соединений: ${establishedConnections.size}",
+                buildString {
+                    append("Метод: /proc/net/tcp + /proc/net/udp\n")
+                    append("Публичные соединения (ни одно не похоже на VPN):\n")
+                    establishedConnections.take(10).forEach { conn ->
+                        append("  ${conn.protocol} → ${conn.remoteIp}:${conn.remotePort} (${conn.serverGuess})\n")
+                    }
+                    if (establishedConnections.size > 10) {
+                        append("  ... и ещё ${establishedConnections.size - 10}\n")
+                    }
+                }
+            ))
+        }
+
         // Фаза 0.7: Прямые признаки VPN/прокси
         onPhase(ScanPhase.DIRECT_SIGNS)
         onProgress(0.06f)

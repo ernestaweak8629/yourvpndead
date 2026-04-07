@@ -110,6 +110,26 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
+            // VPN Server IPs section (from /proc/net established connections)
+            // This data is in the findings already, but we also show raw connection data
+            if (result.listeningPorts.isNotEmpty()) {
+                appendLine("── Listening порты (/proc/net/tcp): ${result.listeningPorts.size} ──")
+                result.listeningPorts.forEach {
+                    val guess = it.clientGuess ?: "unknown"
+                    val scope = if (it.listenAll) "0.0.0.0 ⚠️" else "127.0.0.1"
+                    appendLine("  :${it.port} (UID ${it.uid}, $scope) — $guess")
+                }
+                appendLine()
+            }
+
+            if (result.vpnClientGuesses.isNotEmpty()) {
+                appendLine("── VPN-клиенты (по паттерну портов) ──")
+                result.vpnClientGuesses.forEach {
+                    appendLine("  ${it.name} (${it.confidence}%): ${it.evidence.joinToString()}")
+                }
+                appendLine()
+            }
+
             appendLine("── Открытые порты: ${result.openPorts.size} ──")
             result.openPorts.forEach { appendLine("  :${it.port} (${it.responseMs}ms)") }
             appendLine()
