@@ -66,8 +66,8 @@ class PortScanner {
      * @param parallelism количество одновременных корутин (32 оптимально для localhost)
      */
     suspend fun scanFullRange(
-        timeoutMs: Int = 100,
-        parallelism: Int = 32,
+        timeoutMs: Int = 50,
+        parallelism: Int = 200,
         onProgress: (Float) -> Unit = {}
     ): List<OpenPort> = withContext(Dispatchers.IO) {
         val results = mutableListOf<OpenPort>()
